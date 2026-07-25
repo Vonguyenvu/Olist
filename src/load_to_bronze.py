@@ -10,12 +10,12 @@ def create_bronze_schema(engine):
     with engine.connect() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS bronze;"))
         conn.commit()
-    print("✅ Đã kiểm tra/khởi tạo schema 'bronze'.")
+    print("Schema 'bronze' sẵn sàng.")
 
 
 def clear_existing_bronze_tables(cursor, files_to_load):
     """Xóa dữ liệu cũ trong schema bronze trước khi nạp mới."""
-    print("Đang làm sạch dữ liệu cũ trong schema bronze...")
+    print("Đang làm sạch schema bronze...")
 
     for table_name in files_to_load.values():
         try:
@@ -23,9 +23,10 @@ def clear_existing_bronze_tables(cursor, files_to_load):
         except Exception as exc:
             print(f"ℹBỏ qua TRUNCATE bronze.{table_name} (có thể bảng chưa được tạo): {exc}")
 
-    print("   ✅ Đã làm sạch dữ liệu cũ trong schema bronze.\n")
+    print("-> Đã làm sạch schema bronze.\n")
 
 def load_csv_to_bronze():
+    print(" === BẮT ĐẦU LOAD RAW DATA VÀO TẦNG BRONZE ===")
     engine = get_db_engine()
     create_bronze_schema(engine)
     
@@ -45,7 +46,6 @@ def load_csv_to_bronze():
     cursor = raw_conn.cursor()
 
     try:
-        print("\n === CHẠY LOAD BRONZE BẰNG PSYCOPG2 COPY_EXPERT ===")
         clear_existing_bronze_tables(cursor, files_to_load)
         
         for file_name, table_name in files_to_load.items():

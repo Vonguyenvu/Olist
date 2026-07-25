@@ -7,14 +7,14 @@ def create_gold_schema(engine):
     with engine.connect() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS gold;"))
         conn.commit()
-    print("✅ Đã kiểm tra/khởi tạo schema 'gold'.")
+    print("Schema 'gold' sẵn sàng.")
 
 def clear_existing_gold_tables(engine):
     """
     Xóa dữ liệu cũ trong schema gold trước khi nạp mới.
     LƯU Ý THỨ TỰ: TRUNCATE các bảng Fact trước, bảng Dim sau!
     """
-    print("Đang làm sạch dữ liệu cũ trong schema gold...")
+    print("Đang làm sạch schema gold...")
     
     fact_tables = [
         "gold.fact_orders", 
@@ -40,11 +40,11 @@ def clear_existing_gold_tables(engine):
             conn.execute(text(f"TRUNCATE TABLE {tbl} CASCADE;"))
             
         conn.commit()
-    print("   ✅ Đã TRUNCATE sạch sẽ toàn bộ các bảng trong schema gold.\n")
+    print("-> Đã làm sạch schema gold.\n")
 
 def load_silver_data(engine):
     """Đọc dữ liệu đã làm sạch từ schema silver trong PostgreSQL"""
-    print(" Đang đọc dữ liệu từ Schema Silver...")
+    print("Đang đọc dữ liệu từ Schema Silver...")
     
     customers_df = pd.read_sql("SELECT * FROM silver.customers", engine)
     products_df = pd.read_sql("SELECT * FROM silver.products", engine)
@@ -69,7 +69,7 @@ def load_silver_data(engine):
 
 def transform_and_load_dims(silver_data, engine):
     """Biến đổi và Load dữ liệu vào các bảng Dimension (Schema GOLD)"""
-    print("\n Đang biến đổi và nạp dữ liệu vào các bảng Dimension...")
+    print("Đang biến đổi và nạp dữ liệu vào các bảng Dimension...")
 
     # 1. dim_customers
     dim_customers = silver_data["customers"][[
@@ -154,7 +154,7 @@ def transform_and_load_dims(silver_data, engine):
 
 def transform_and_load_facts(silver_data, engine):
     """Biến đổi và Load dữ liệu vào các bảng Fact (Schema GOLD)"""
-    print("\nĐang biến đổi và nạp dữ liệu vào các bảng Fact...")
+    print("Đang biến đổi và nạp dữ liệu vào các bảng Fact...")
 
     # A. fact_payments
     payments_df = silver_data["payments"].copy()
@@ -234,7 +234,7 @@ def run_silver_to_gold():
     engine = get_db_engine()
     
     try:
-        print("=== BẮT ĐẦU CHẠY TẦNG SILVER -> GOLD (GOLD SCHEMA) ===")
+        print("=== BẮT ĐẦU CHẠY TẦNG SILVER -> GOLD ===")
         
         # 1. Tạo schema gold nếu chưa có
         create_gold_schema(engine)
@@ -252,7 +252,7 @@ def run_silver_to_gold():
         transform_and_load_dims(silver_data, engine)
         transform_and_load_facts(silver_data, engine)
         
-        print("\nTẤT CẢ DỮ LIỆU ĐÃ ĐƯỢC LOAD THÀNH CÔNG VÀO SCHEMA GOLD!")
+        print("\n✅TẤT CẢ DỮ LIỆU ĐÃ ĐƯỢC LOAD THÀNH CÔNG VÀO SCHEMA GOLD!")
     except Exception as e:
         print(f"❌ Có lỗi xảy ra trong quá trình Silver -> Gold: {e}")
 
