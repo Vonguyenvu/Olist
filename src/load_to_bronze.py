@@ -1,10 +1,11 @@
 import os
 import logging
 from sqlalchemy import text
-from db_connection import get_db_engine
+
+from .db_connection import get_db_engine
 from logging_setup import setup_logging
 
-DATA_BRONZE_PATH = "data/bronze"
+DATA_BRONZE_PATH = "data"
 logger = logging.getLogger(__name__)
 
 

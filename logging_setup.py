@@ -3,7 +3,7 @@ from logging.config import dictConfig
 from pathlib import Path
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent
 
 
 def setup_logging(log_file: str | None = None) -> logging.Logger:

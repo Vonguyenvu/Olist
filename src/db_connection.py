@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from dotenv import load_dotenv
+
 from logging_setup import setup_logging
 
 # Đọc các biến môi trường từ file .env (nếu có)

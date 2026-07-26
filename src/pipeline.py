@@ -1,9 +1,9 @@
 import logging
 
 from logging_setup import setup_logging
-from load_to_bronze import load_csv_to_bronze
-from bronze_to_silver import run_bronze_to_silver
-from silver_to_gold import run_silver_to_gold
+from .load_to_bronze import load_csv_to_bronze
+from .bronze_to_silver import run_bronze_to_silver
+from .silver_to_gold import run_silver_to_gold
 
 
 logger = logging.getLogger(__name__)

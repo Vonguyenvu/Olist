@@ -1,7 +1,8 @@
 import logging
 from sqlalchemy import text
-from db_connection import get_db_engine
 import pandas as pd
+
+from .db_connection import get_db_engine
 from logging_setup import setup_logging
 
 engine = get_db_engine()
