@@ -42,59 +42,62 @@ def clear_existing_silver_tables(engine):
 
 def clean_customers():
     print(" Cleaning customers...")
-    # Đọc từ bronze schema
-    df = pd.read_sql("SELECT * FROM bronze.customers", engine)
+    df = pd.read_sql('SELECT * FROM bronze.customers', engine)
     
     # Làm sạch: loại bỏ khoảng trắng thừa
     df['customer_city'] = df['customer_city'].str.strip().str.title()
     df['customer_state'] = df['customer_state'].str.strip().str.upper()
-    
-    # Ghi trực tiếp vào silver schema trong Postgres
-    df.to_sql("customers", engine, schema="silver", if_exists="replace", index=False)
+    df["customer_zip_code_prefix"] = pd.to_numeric(df["customer_zip_code_prefix"], errors="coerce").astype("Int64")
+    df.to_sql(name = "customers", con= engine, schema= 'silver', if_exists='append', index= False)
     print("   -> Saved to silver.customers")
 
 def clean_products():
     print(" Cleaning products...")
-    df = pd.read_sql("SELECT * FROM bronze.products", engine)
+    df = pd.read_sql(sql='SELECT * FROM bronze.products', con= engine)
     
     # Ép kiểu dữ liệu số
-    numeric_cols = ["product_weight_g", "product_length_cm", "product_height_cm", "product_width_cm"]
+    numeric_cols = ["product_description_lenght","product_photos_qty","product_weight_g", "product_length_cm", "product_height_cm", "product_width_cm"]
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
         
-    df.to_sql("products", engine, schema="silver", if_exists="replace", index=False)
+    df.to_sql(name='products', con= engine,schema='silver', if_exists='append', index=False)
     print("   -> Saved to silver.products")
 
 def clean_sellers():
     print(" Cleaning sellers...")
     df = pd.read_sql("SELECT * FROM bronze.sellers", engine)
     
+    # Làm sạch: loại bỏ khoảng trắng thừa
     df['seller_city'] = df['seller_city'].str.strip().str.title()
     df['seller_state'] = df['seller_state'].str.strip().str.upper()
+    df["seller_zip_code_prefix"] = pd.to_numeric(df["seller_zip_code_prefix"], errors="coerce").astype("Int64")
     
-    df.to_sql("sellers", engine, schema="silver", if_exists="replace", index=False)
+    df.to_sql("sellers", engine, schema="silver", if_exists="append", index=False)
     print("   -> Saved to silver.sellers")
 
 def clean_reviews():
-    print(" Cleaning reviews & deduplicating...")
+    print(" Cleaning reviews...")
     df = pd.read_sql("SELECT * FROM bronze.order_reviews", engine)
     
     # Parse timestamp
-    df["review_answer_timestamp"] = pd.to_datetime(df["review_answer_timestamp"])
-    df["review_creation_date"] = pd.to_datetime(df["review_creation_date"])
+    df["review_answer_timestamp"] = pd.to_datetime(df["review_answer_timestamp"],errors='coerce')
+    df["review_creation_date"] = pd.to_datetime(df["review_creation_date"],errors='coerce')
     
     # Khử trùng lặp (giữ lại review mới nhất cho từng review_id)
     df = df.sort_values("review_answer_timestamp").groupby("review_id").last().reset_index()
+    
+    # Ép kiểu dữ liệu số
+    df["review_score"] = pd.to_numeric(df["review_score"],errors='coerce').astype("Int64")
     
     # Xử lý text NULL
     df["review_comment_title"] = df["review_comment_title"].fillna("No Title").str.strip()
     df["review_comment_message"] = df["review_comment_message"].fillna("No Comment").str.strip()
     
-    df.to_sql("order_reviews", engine, schema="silver", if_exists="replace", index=False)
+    df.to_sql("order_reviews", engine, schema="silver", if_exists="append", index=False)
     print("   -> Saved to silver.order_reviews")
 
 def clean_orders():
-    print(" Cleaning orders & parsing dates...")
+    print(" Cleaning orders...")
     df = pd.read_sql("SELECT * FROM bronze.orders", engine)
     
     # Ép kiểu Datetime cho tất cả các cột thời gian
@@ -104,9 +107,9 @@ def clean_orders():
         "order_estimated_delivery_date"
     ]
     for col in date_cols:
-        df[col] = pd.to_datetime(df[col])
+        df[col] = pd.to_datetime(df[col], errors='coerce')
         
-    df.to_sql("orders", engine, schema="silver", if_exists="replace", index=False)
+    df.to_sql("orders", engine, schema="silver", if_exists="append", index=False)
     print("   -> Saved to silver.orders")
 
 def clean_order_items():
@@ -117,18 +120,18 @@ def clean_order_items():
     df["price"] = pd.to_numeric(df["price"], errors='coerce').fillna(0.0)
     df["freight_value"] = pd.to_numeric(df["freight_value"], errors='coerce').fillna(0.0)
     
-    df.to_sql("order_items", engine, schema="silver", if_exists="replace", index=False)
+    df.to_sql("order_items", engine, schema="silver", if_exists="append", index=False)
     print("   -> Saved to silver.order_items")
 
 def clean_payments():
     print(" Cleaning payments...")
     df = pd.read_sql("SELECT * FROM bronze.order_payments", engine)
     
-    df["payment_sequential"] = pd.to_numeric(df["payment_sequential"]).astype(int)
-    df["payment_installments"] = pd.to_numeric(df["payment_installments"]).astype(int)
+    df["payment_sequential"] = pd.to_numeric(df["payment_sequential"],errors='coerce').astype("Int64")
+    df["payment_installments"] = pd.to_numeric(df["payment_installments"],errors='coerce').astype("Int64")
     df["payment_value"] = pd.to_numeric(df["payment_value"], errors='coerce').fillna(0.0)
     
-    df.to_sql("order_payments", engine, schema="silver", if_exists="replace", index=False)
+    df.to_sql("order_payments", engine, schema="silver", if_exists="append", index=False)
     print("   -> Saved to silver.order_payments")
 
 def clean_geolocation():
@@ -145,7 +148,7 @@ def clean_geolocation():
     # Loại bỏ trùng lặp hoàn toàn
     df = df.drop_duplicates()
     
-    df.to_sql("geolocation", engine, schema="silver", if_exists="replace", index=False)
+    df.to_sql("geolocation", engine, schema="silver", if_exists="append", index=False)
     print("   -> Saved to silver.geolocation")
 
 def clean_translation():
@@ -157,7 +160,7 @@ def clean_translation():
     # Loại bỏ trùng lặp hoàn toàn
     df = df.drop_duplicates()
     
-    df.to_sql("product_category_name_translation", engine, schema="silver", if_exists="replace", index=False)
+    df.to_sql("product_category_name_translation", engine, schema="silver", if_exists="append", index=False)
     print("   -> Saved to silver.product_category_name_translation")
     
 def run_bronze_to_silver():

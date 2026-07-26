@@ -43,7 +43,6 @@ def clear_existing_gold_tables(engine):
     print("-> Đã làm sạch schema gold.\n")
 
 def load_silver_data(engine):
-    """Đọc dữ liệu đã làm sạch từ schema silver trong PostgreSQL"""
     print("Đang đọc dữ liệu từ Schema Silver...")
     
     customers_df = pd.read_sql("SELECT * FROM silver.customers", engine)
@@ -77,7 +76,6 @@ def transform_and_load_dims(silver_data, engine):
         "customer_city", "customer_state"
     ]].rename(columns={"customer_id": "customer_key"})
     
-    dim_customers["customer_zip_code_prefix"] = pd.to_numeric(dim_customers["customer_zip_code_prefix"], errors="coerce").astype("Int64")
     dim_customers.to_sql("dim_customers", engine, schema="gold", if_exists="append", index=False)
     print("   -> Loaded gold.dim_customers")
 
@@ -91,10 +89,10 @@ def transform_and_load_dims(silver_data, engine):
         "product_key": products_merged["product_id"],
         "product_category_name_pt": products_merged["product_category_name"],
         "product_category_name_en": products_merged["product_category_name_english"],
-        "product_weight_g": pd.to_numeric(products_merged["product_weight_g"], errors="coerce").fillna(0).astype(int),
-        "product_length_cm": pd.to_numeric(products_merged["product_length_cm"], errors="coerce").fillna(0).astype(int),
-        "product_height_cm": pd.to_numeric(products_merged["product_height_cm"], errors="coerce").fillna(0).astype(int),
-        "product_width_cm": pd.to_numeric(products_merged["product_width_cm"], errors="coerce").fillna(0).astype(int)
+        "product_weight_g": products_merged["product_weight_g"],
+        "product_length_cm": products_merged["product_length_cm"],
+        "product_height_cm": products_merged["product_height_cm"],
+        "product_width_cm": products_merged["product_width_cm"]
     })
     dim_products.to_sql("dim_products", engine, schema="gold", if_exists="append", index=False)
     print("   -> Loaded gold.dim_products")
@@ -103,8 +101,6 @@ def transform_and_load_dims(silver_data, engine):
     dim_sellers = silver_data["sellers"][[
         "seller_id", "seller_zip_code_prefix", "seller_city", "seller_state"
     ]].rename(columns={"seller_id": "seller_key"})
-    
-    dim_sellers["seller_zip_code_prefix"] = pd.to_numeric(dim_sellers["seller_zip_code_prefix"], errors="coerce").astype("Int64")
     dim_sellers.to_sql("dim_sellers", engine, schema="gold", if_exists="append", index=False)
     print("   -> Loaded gold.dim_sellers")
 
@@ -112,11 +108,11 @@ def transform_and_load_dims(silver_data, engine):
     reviews_df = silver_data["reviews"].copy()
     dim_reviews = pd.DataFrame({
         "review_key": reviews_df["review_id"],
-        "review_score": pd.to_numeric(reviews_df["review_score"], errors="coerce").astype("Int64"),
+        "review_score": reviews_df["review_score"],
         "review_comment_title": reviews_df["review_comment_title"],
         "review_comment_message": reviews_df["review_comment_message"],
-        "review_creation_date": pd.to_datetime(reviews_df["review_creation_date"]),
-        "review_answer_timestamp": pd.to_datetime(reviews_df["review_answer_timestamp"]),
+        "review_creation_date": reviews_df["review_creation_date"],
+        "review_answer_timestamp": reviews_df["review_answer_timestamp"],
         "has_comment": reviews_df["review_comment_message"].notna() & (reviews_df["review_comment_message"] != "No Comment")
     })
     dim_reviews.to_sql("dim_reviews", engine, schema="gold", if_exists="append", index=False)
@@ -133,7 +129,7 @@ def transform_and_load_dims(silver_data, engine):
 
     # 6. dim_date
     orders_df = silver_data["orders"].copy()
-    orders_df["purchase_dt"] = pd.to_datetime(orders_df["order_purchase_timestamp"])
+    orders_df["purchase_dt"] = orders_df["order_purchase_timestamp"]
     
     min_date = orders_df["purchase_dt"].min().floor("D")
     max_date = orders_df["purchase_dt"].max().ceil("D") + pd.Timedelta(days=90)
@@ -168,9 +164,9 @@ def transform_and_load_facts(silver_data, engine):
         "order_id": payments_merged["order_id"],
         "customer_key": payments_merged["customer_id"],
         "payment_type_key": payments_merged["payment_type"],
-        "payment_sequential": pd.to_numeric(payments_merged["payment_sequential"], errors="coerce").astype("Int64"),
-        "payment_installments": pd.to_numeric(payments_merged["payment_installments"], errors="coerce").astype("Int64"),
-        "payment_value": pd.to_numeric(payments_merged["payment_value"], errors="coerce").fillna(0.0)
+        "payment_sequential": payments_merged["payment_sequential"],
+        "payment_installments": payments_merged["payment_installments"],
+        "payment_value": payments_merged["payment_value"]
     })
     fact_payments.to_sql("fact_payments", engine, schema="gold", if_exists="append", index=False)
     print("   -> Loaded gold.fact_payments")
@@ -193,18 +189,17 @@ def transform_and_load_facts(silver_data, engine):
     df = df.merge(reviews_dedup, on="order_id", how="left")
 
     # Chuyển đổi datetime
-    df["purchase_dt"] = pd.to_datetime(df["order_purchase_timestamp"])
-    df["delivered_dt"] = pd.to_datetime(df["order_delivered_customer_date"])
-    df["estimated_dt"] = pd.to_datetime(df["order_estimated_delivery_date"])
+    df["purchase_dt"] = df["order_purchase_timestamp"]
+    df["delivered_dt"] = df["order_delivered_customer_date"]
+    df["estimated_dt"] = df["order_estimated_delivery_date"]
 
     # Tính toán chỉ số delivery
     df["delivery_days_actual"] = (df["delivered_dt"] - df["purchase_dt"]).dt.days
     df["delivery_days_estimated"] = (df["estimated_dt"] - df["purchase_dt"]).dt.days
     df["is_delayed"] = df["delivered_dt"] > df["estimated_dt"]
 
-    price = pd.to_numeric(df["price"], errors="coerce").fillna(0.0)
-    freight = pd.to_numeric(df["freight_value"], errors="coerce").fillna(0.0)
-
+    price = df["price"]
+    freight = df["freight_value"]
     fact_orders = pd.DataFrame({
         "order_item_key": df["order_id"] + "-" + df["order_item_id"].astype(str),
         "order_id": df["order_id"],
