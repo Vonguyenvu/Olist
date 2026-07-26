@@ -1,20 +1,24 @@
 import pandas as pd
+import logging
 from sqlalchemy import text
 from db_connection import get_db_engine
+from logging_setup import setup_logging
+
+logger = logging.getLogger(__name__)
 
 def create_gold_schema(engine):
     """Đảm bảo schema gold đã được khởi tạo trong PostgreSQL"""
     with engine.connect() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS gold;"))
         conn.commit()
-    print("Schema 'gold' sẵn sàng.")
+    logger.info("Schema gold sẵn sàng")
 
 def clear_existing_gold_tables(engine):
     """
     Xóa dữ liệu cũ trong schema gold trước khi nạp mới.
     LƯU Ý THỨ TỰ: TRUNCATE các bảng Fact trước, bảng Dim sau!
     """
-    print("Đang làm sạch schema gold...")
+    logger.info("Đang làm sạch schema gold")
     
     fact_tables = [
         "gold.fact_orders", 
@@ -40,10 +44,10 @@ def clear_existing_gold_tables(engine):
             conn.execute(text(f"TRUNCATE TABLE {tbl} CASCADE;"))
             
         conn.commit()
-    print("-> Đã làm sạch schema gold.\n")
+    logger.info("Đã làm sạch schema gold")
 
 def load_silver_data(engine):
-    print("Đang đọc dữ liệu từ Schema Silver...")
+    logger.info("Đang đọc dữ liệu từ schema silver")
     
     customers_df = pd.read_sql("SELECT * FROM silver.customers", engine)
     products_df = pd.read_sql("SELECT * FROM silver.products", engine)
@@ -55,7 +59,7 @@ def load_silver_data(engine):
     
     translation_df = pd.read_sql("SELECT * FROM silver.product_category_name_translation", engine)
     
-    return {
+    silver_data = {
         "customers": customers_df,
         "products": products_df,
         "sellers": sellers_df,
@@ -65,10 +69,12 @@ def load_silver_data(engine):
         "order_items": order_items_df,
         "translation": translation_df
     }
+    logger.info("Đã đọc silver: %s", ", ".join(f"{name}={len(data)}" for name, data in silver_data.items()))
+    return silver_data
 
 def transform_and_load_dims(silver_data, engine):
     """Biến đổi và Load dữ liệu vào các bảng Dimension (Schema GOLD)"""
-    print("Đang biến đổi và nạp dữ liệu vào các bảng Dimension...")
+    logger.info("Đang biến đổi và nạp dimension vào schema gold")
 
     # 1. dim_customers
     dim_customers = silver_data["customers"][[
@@ -77,7 +83,7 @@ def transform_and_load_dims(silver_data, engine):
     ]].rename(columns={"customer_id": "customer_key"})
     
     dim_customers.to_sql("dim_customers", engine, schema="gold", if_exists="append", index=False)
-    print("   -> Loaded gold.dim_customers")
+    logger.info("Đã nạp %d dòng vào gold.dim_customers", len(dim_customers))
 
     # 2. dim_products (Kết hợp dịch tên danh mục)
     products_merged = silver_data["products"].merge(
@@ -95,14 +101,14 @@ def transform_and_load_dims(silver_data, engine):
         "product_width_cm": products_merged["product_width_cm"]
     })
     dim_products.to_sql("dim_products", engine, schema="gold", if_exists="append", index=False)
-    print("   -> Loaded gold.dim_products")
+    logger.info("Đã nạp %d dòng vào gold.dim_products", len(dim_products))
 
     # 3. dim_sellers
     dim_sellers = silver_data["sellers"][[
         "seller_id", "seller_zip_code_prefix", "seller_city", "seller_state"
     ]].rename(columns={"seller_id": "seller_key"})
     dim_sellers.to_sql("dim_sellers", engine, schema="gold", if_exists="append", index=False)
-    print("   -> Loaded gold.dim_sellers")
+    logger.info("Đã nạp %d dòng vào gold.dim_sellers", len(dim_sellers))
 
     # 4. dim_reviews
     reviews_df = silver_data["reviews"].copy()
@@ -116,7 +122,7 @@ def transform_and_load_dims(silver_data, engine):
         "has_comment": reviews_df["review_comment_message"].notna() & (reviews_df["review_comment_message"] != "No Comment")
     })
     dim_reviews.to_sql("dim_reviews", engine, schema="gold", if_exists="append", index=False)
-    print("   -> Loaded gold.dim_reviews")
+    logger.info("Đã nạp %d dòng vào gold.dim_reviews", len(dim_reviews))
 
     # 5. dim_payment_types
     unique_payment_types = silver_data["payments"]["payment_type"].dropna().unique()
@@ -125,7 +131,7 @@ def transform_and_load_dims(silver_data, engine):
         "payment_type_name": unique_payment_types
     })
     dim_payment_types.to_sql("dim_payment_types", engine, schema="gold", if_exists="append", index=False)
-    print("   -> Loaded gold.dim_payment_types")
+    logger.info("Đã nạp %d dòng vào gold.dim_payment_types", len(dim_payment_types))
 
     # 6. dim_date
     orders_df = silver_data["orders"].copy()
@@ -146,11 +152,11 @@ def transform_and_load_dims(silver_data, engine):
         "is_weekend": date_range.dayofweek >= 5
     })
     dim_date.to_sql("dim_date", engine, schema="gold", if_exists="append", index=False)
-    print("   -> Loaded gold.dim_date")
+    logger.info("Đã nạp %d dòng vào gold.dim_date", len(dim_date))
 
 def transform_and_load_facts(silver_data, engine):
     """Biến đổi và Load dữ liệu vào các bảng Fact (Schema GOLD)"""
-    print("Đang biến đổi và nạp dữ liệu vào các bảng Fact...")
+    logger.info("Đang biến đổi và nạp fact vào schema gold")
 
     # A. fact_payments
     payments_df = silver_data["payments"].copy()
@@ -169,7 +175,7 @@ def transform_and_load_facts(silver_data, engine):
         "payment_value": payments_merged["payment_value"]
     })
     fact_payments.to_sql("fact_payments", engine, schema="gold", if_exists="append", index=False)
-    print("   -> Loaded gold.fact_payments")
+    logger.info("Đã nạp %d dòng vào gold.fact_payments", len(fact_payments))
 
     # B. fact_orders
     items_df = silver_data["order_items"].copy()
@@ -222,14 +228,14 @@ def transform_and_load_facts(silver_data, engine):
     fact_orders = fact_orders.drop_duplicates(subset=["order_item_key"])
 
     fact_orders.to_sql("fact_orders", engine, schema="gold", if_exists="append", index=False)
-    print("   -> Loaded gold.fact_orders")
+    logger.info("Đã nạp %d dòng vào gold.fact_orders", len(fact_orders))
 
 def run_silver_to_gold():
     """Hàm điều phối toàn bộ quá trình Silver -> Gold"""
     engine = get_db_engine()
     
     try:
-        print("=== BẮT ĐẦU CHẠY TẦNG SILVER -> GOLD ===")
+        logger.info("Bắt đầu tầng silver -> gold")
         
         # 1. Tạo schema gold nếu chưa có
         create_gold_schema(engine)
@@ -237,8 +243,8 @@ def run_silver_to_gold():
         # 2. Truncate các bảng Gold cũ nếu đã tồn tại
         try:
             clear_existing_gold_tables(engine)
-        except Exception as e:
-            print(f"ℹBỏ qua TRUNCATE (có thể các bảng chưa được tạo): {e}")
+        except Exception:
+            logger.warning("Không thể làm sạch bảng gold; có thể bảng chưa được tạo", exc_info=True)
 
         # 3. Đọc dữ liệu từ Schema Silver
         silver_data = load_silver_data(engine)
@@ -247,9 +253,11 @@ def run_silver_to_gold():
         transform_and_load_dims(silver_data, engine)
         transform_and_load_facts(silver_data, engine)
         
-        print("\n✅TẤT CẢ DỮ LIỆU ĐÃ ĐƯỢC LOAD THÀNH CÔNG VÀO SCHEMA GOLD!")
-    except Exception as e:
-        print(f"❌ Có lỗi xảy ra trong quá trình Silver -> Gold: {e}")
+        logger.info("Hoàn thành tầng silver -> gold")
+    except Exception:
+        logger.exception("Tầng silver -> gold thất bại")
+        raise
 
 if __name__ == "__main__":
+    setup_logging()
     run_silver_to_gold()

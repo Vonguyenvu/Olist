@@ -1,9 +1,11 @@
-import os
+import logging
 from sqlalchemy import text
 from db_connection import get_db_engine
 import pandas as pd
+from logging_setup import setup_logging
 
 engine = get_db_engine()
+logger = logging.getLogger(__name__)
 
 
 def create_silver_schema(engine):
@@ -11,12 +13,12 @@ def create_silver_schema(engine):
     with engine.connect() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS silver;"))
         conn.commit()
-    print("Schema 'silver' sẵn sàng.")
+    logger.info("Schema silver sẵn sàng")
 
 
 def clear_existing_silver_tables(engine):
     """Xóa dữ liệu cũ trong schema silver trước khi nạp mới."""
-    print("Đang làm sạch schema silver...")
+    logger.info("Đang làm sạch schema silver")
 
     tables = [
         "customers",
@@ -34,14 +36,14 @@ def clear_existing_silver_tables(engine):
         for table_name in tables:
             try:
                 conn.execute(text(f"TRUNCATE TABLE silver.{table_name};"))
-            except Exception as exc:
-                print(f"ℹBỏ qua TRUNCATE silver.{table_name} (có thể bảng chưa được tạo): {exc}")
+            except Exception:
+                logger.warning("Không thể TRUNCATE silver.%s; có thể bảng chưa được tạo", table_name, exc_info=True)
         conn.commit()
 
-    print("->Đã làm sạch schema silver.\n")
+    logger.info("Đã làm sạch schema silver")
 
 def clean_customers():
-    print(" Cleaning customers...")
+    logger.info("Đang làm sạch bronze.customers")
     df = pd.read_sql('SELECT * FROM bronze.customers', engine)
     
     # Làm sạch: loại bỏ khoảng trắng thừa
@@ -49,10 +51,10 @@ def clean_customers():
     df['customer_state'] = df['customer_state'].str.strip().str.upper()
     df["customer_zip_code_prefix"] = pd.to_numeric(df["customer_zip_code_prefix"], errors="coerce").astype("Int64")
     df.to_sql(name = "customers", con= engine, schema= 'silver', if_exists='append', index= False)
-    print("   -> Saved to silver.customers")
+    logger.info("Đã nạp %d dòng vào silver.customers", len(df))
 
 def clean_products():
-    print(" Cleaning products...")
+    logger.info("Đang làm sạch bronze.products")
     df = pd.read_sql(sql='SELECT * FROM bronze.products', con= engine)
     
     # Ép kiểu dữ liệu số
@@ -61,10 +63,10 @@ def clean_products():
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
         
     df.to_sql(name='products', con= engine,schema='silver', if_exists='append', index=False)
-    print("   -> Saved to silver.products")
+    logger.info("Đã nạp %d dòng vào silver.products", len(df))
 
 def clean_sellers():
-    print(" Cleaning sellers...")
+    logger.info("Đang làm sạch bronze.sellers")
     df = pd.read_sql("SELECT * FROM bronze.sellers", engine)
     
     # Làm sạch: loại bỏ khoảng trắng thừa
@@ -73,10 +75,10 @@ def clean_sellers():
     df["seller_zip_code_prefix"] = pd.to_numeric(df["seller_zip_code_prefix"], errors="coerce").astype("Int64")
     
     df.to_sql("sellers", engine, schema="silver", if_exists="append", index=False)
-    print("   -> Saved to silver.sellers")
+    logger.info("Đã nạp %d dòng vào silver.sellers", len(df))
 
 def clean_reviews():
-    print(" Cleaning reviews...")
+    logger.info("Đang làm sạch bronze.order_reviews")
     df = pd.read_sql("SELECT * FROM bronze.order_reviews", engine)
     
     # Parse timestamp
@@ -94,10 +96,10 @@ def clean_reviews():
     df["review_comment_message"] = df["review_comment_message"].fillna("No Comment").str.strip()
     
     df.to_sql("order_reviews", engine, schema="silver", if_exists="append", index=False)
-    print("   -> Saved to silver.order_reviews")
+    logger.info("Đã nạp %d dòng vào silver.order_reviews", len(df))
 
 def clean_orders():
-    print(" Cleaning orders...")
+    logger.info("Đang làm sạch bronze.orders")
     df = pd.read_sql("SELECT * FROM bronze.orders", engine)
     
     # Ép kiểu Datetime cho tất cả các cột thời gian
@@ -110,10 +112,10 @@ def clean_orders():
         df[col] = pd.to_datetime(df[col], errors='coerce')
         
     df.to_sql("orders", engine, schema="silver", if_exists="append", index=False)
-    print("   -> Saved to silver.orders")
+    logger.info("Đã nạp %d dòng vào silver.orders", len(df))
 
 def clean_order_items():
-    print(" Cleaning order items...")
+    logger.info("Đang làm sạch bronze.order_items")
     df = pd.read_sql("SELECT * FROM bronze.order_items", engine)
     
     df["shipping_limit_date"] = pd.to_datetime(df["shipping_limit_date"])
@@ -121,10 +123,10 @@ def clean_order_items():
     df["freight_value"] = pd.to_numeric(df["freight_value"], errors='coerce').fillna(0.0)
     
     df.to_sql("order_items", engine, schema="silver", if_exists="append", index=False)
-    print("   -> Saved to silver.order_items")
+    logger.info("Đã nạp %d dòng vào silver.order_items", len(df))
 
 def clean_payments():
-    print(" Cleaning payments...")
+    logger.info("Đang làm sạch bronze.order_payments")
     df = pd.read_sql("SELECT * FROM bronze.order_payments", engine)
     
     df["payment_sequential"] = pd.to_numeric(df["payment_sequential"],errors='coerce').astype("Int64")
@@ -132,10 +134,10 @@ def clean_payments():
     df["payment_value"] = pd.to_numeric(df["payment_value"], errors='coerce').fillna(0.0)
     
     df.to_sql("order_payments", engine, schema="silver", if_exists="append", index=False)
-    print("   -> Saved to silver.order_payments")
+    logger.info("Đã nạp %d dòng vào silver.order_payments", len(df))
 
 def clean_geolocation():
-    print(" Cleaning geolocation...")
+    logger.info("Đang làm sạch bronze.geolocation")
     df = pd.read_sql("SELECT * FROM bronze.geolocation", engine)
     
     # Ép kiểu tọa độ và làm sạch text
@@ -149,10 +151,10 @@ def clean_geolocation():
     df = df.drop_duplicates()
     
     df.to_sql("geolocation", engine, schema="silver", if_exists="append", index=False)
-    print("   -> Saved to silver.geolocation")
+    logger.info("Đã nạp %d dòng vào silver.geolocation", len(df))
 
 def clean_translation():
-    print(" Cleaning category translation...")
+    logger.info("Đang làm sạch bronze.product_category_name_translation")
     df = pd.read_sql("SELECT * FROM bronze.product_category_name_translation", engine)
     df['product_category_name'] = df['product_category_name'].str.strip()
     df['product_category_name_english'] = df['product_category_name_english'].str.strip()
@@ -161,25 +163,29 @@ def clean_translation():
     df = df.drop_duplicates()
     
     df.to_sql("product_category_name_translation", engine, schema="silver", if_exists="append", index=False)
-    print("   -> Saved to silver.product_category_name_translation")
+    logger.info("Đã nạp %d dòng vào silver.product_category_name_translation", len(df))
     
 def run_bronze_to_silver():
-    print(" === BẮT ĐẦU CHẠY TẦNG BRONZE -> SILVER  ===")
-    create_silver_schema(engine)
-    clear_existing_silver_tables(engine)    
-    clean_customers()
-    clean_products()
-    clean_sellers()
-    clean_reviews()
-    clean_orders()
-    clean_order_items()
-    clean_payments()
-    clean_geolocation()
-    clean_translation()
-    print("\n✅ ĐÃ LÀM SẠCH VÀ NẠP DỮ LIỆU THÀNH CÔNG VÀO SCHEMA SILVER!\n")
+    logger.info("Bắt đầu tầng bronze -> silver")
+    try:
+        create_silver_schema(engine)
+        clear_existing_silver_tables(engine)
+        clean_customers()
+        clean_products()
+        clean_sellers()
+        clean_reviews()
+        clean_orders()
+        clean_order_items()
+        clean_payments()
+        clean_geolocation()
+        clean_translation()
+        logger.info("Hoàn thành tầng bronze -> silver")
+    except Exception:
+        logger.exception("Tầng bronze -> silver thất bại")
+        raise
 
 if __name__ == "__main__":
+    setup_logging()
     run_bronze_to_silver()
     
     
-

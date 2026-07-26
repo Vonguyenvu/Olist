@@ -1,8 +1,11 @@
 import os
+import logging
 from sqlalchemy import text
 from db_connection import get_db_engine
+from logging_setup import setup_logging
 
 DATA_BRONZE_PATH = "data/bronze"
+logger = logging.getLogger(__name__)
 
 
 def create_bronze_schema(engine):
@@ -10,23 +13,23 @@ def create_bronze_schema(engine):
     with engine.connect() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS bronze;"))
         conn.commit()
-    print("Schema 'bronze' sẵn sàng.")
+    logger.info("Schema bronze sẵn sàng")
 
 
 def clear_existing_bronze_tables(cursor, files_to_load):
     """Xóa dữ liệu cũ trong schema bronze trước khi nạp mới."""
-    print("Đang làm sạch schema bronze...")
+    logger.info("Đang làm sạch schema bronze")
 
     for table_name in files_to_load.values():
         try:
             cursor.execute(f"TRUNCATE TABLE bronze.{table_name};")
-        except Exception as exc:
-            print(f"ℹBỏ qua TRUNCATE bronze.{table_name} (có thể bảng chưa được tạo): {exc}")
+        except Exception:
+            logger.warning("Không thể TRUNCATE bronze.%s; có thể bảng chưa được tạo", table_name, exc_info=True)
 
-    print("-> Đã làm sạch schema bronze.\n")
+    logger.info("Đã làm sạch schema bronze")
 
 def load_csv_to_bronze():
-    print(" === BẮT ĐẦU LOAD RAW DATA VÀO TẦNG BRONZE ===")
+    logger.info("Bắt đầu nạp CSV vào tầng bronze")
     engine = get_db_engine()
     create_bronze_schema(engine)
     
@@ -52,7 +55,7 @@ def load_csv_to_bronze():
             file_path = os.path.abspath(os.path.join(DATA_BRONZE_PATH, file_name))
             
             if not os.path.exists(file_path):
-                print(f"⚠️ Không tìm thấy file: {file_path}, bỏ qua...")
+                logger.warning("Không tìm thấy file CSV, bỏ qua: %s", file_path)
                 continue
             
             # 2. Xử lý COPY
@@ -83,17 +86,19 @@ def load_csv_to_bronze():
             with open(file_path, 'r', encoding='utf-8') as f:
                 cursor.copy_expert(sql=copy_sql, file=f)
                 
-            print(f"   -> Đã COPY thành công bronze.{table_name}")
+            logger.info("Đã COPY %s vào bronze.%s", file_name, table_name)
             
         raw_conn.commit()
-        print("\n ✅ HOÀN THÀNH LOAD TẤT CẢ FILE VÀO SCHEMA BRONZE!\n")
+        logger.info("Hoàn thành nạp dữ liệu vào schema bronze")
         
-    except Exception as e:
+    except Exception:
         raw_conn.rollback()
-        print(f"❌ Lỗi trong quá trình COPY: {e}")
+        logger.exception("Lỗi khi COPY CSV vào schema bronze; đã rollback transaction")
+        raise
     finally:
         cursor.close()
         raw_conn.close()
 
 if __name__ == "__main__":
+    setup_logging()
     load_csv_to_bronze()

@@ -1,10 +1,13 @@
 import os
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from dotenv import load_dotenv
+from logging_setup import setup_logging
 
 # Đọc các biến môi trường từ file .env (nếu có)
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 # Cấu hình thông số kết nối PostgreSQL
 DB_USER = os.getenv("POSTGRES_USER")
@@ -32,10 +35,12 @@ def test_connection():
     """Hàm kiểm tra kết nối tới Database"""
     try:
         with engine.connect() as connection:
-            print(f"Kết nối thành công tới PostgreSQL Database: '{DB_NAME}' tại {DB_HOST}:{DB_PORT}")
-    except Exception as e:
-        print(f"Kết nối thất bại: {e}")
+            logger.info("Kết nối thành công tới PostgreSQL database '%s' tại %s:%s", DB_NAME, DB_HOST, DB_PORT)
+    except Exception:
+        logger.exception("Kết nối PostgreSQL thất bại tại %s:%s", DB_HOST, DB_PORT)
+        raise
         
         
 if __name__ == "__main__":
+    setup_logging()
     test_connection()
