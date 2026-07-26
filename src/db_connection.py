@@ -6,24 +6,17 @@ from dotenv import load_dotenv
 # Đọc các biến môi trường từ file .env (nếu có)
 load_dotenv()
 
-def _get_required_env(var_name: str) -> str:
-    value = os.getenv(var_name)
-    if not value:
-        raise RuntimeError(f"Thiếu biến môi trường bắt buộc: {var_name}")
-    return value
-
-
-# 1. Cấu hình thông số kết nối PostgreSQL
-DB_USER = _get_required_env("POSTGRES_USER")
-DB_PASSWORD = _get_required_env("POSTGRES_PASSWORD")
-DB_HOST = _get_required_env("POSTGRES_HOST")
-DB_PORT = _get_required_env("POSTGRES_PORT")
-DB_NAME = _get_required_env("POSTGRES_DB")
+# Cấu hình thông số kết nối PostgreSQL
+DB_USER = os.getenv("POSTGRES_USER")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+DB_HOST = os.getenv("POSTGRES_HOST")
+DB_PORT = os.getenv("POSTGRES_PORT")
+DB_NAME = os.getenv("POSTGRES_DB")
 
 # Tạo chuỗi kết nối với database 
 DATABASE_URL = F"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}" 
 
-# 2. Khởi tạo Engine kết nối (kèm cấu hình Connection Pool)
+# Khởi tạo Engine kết nối
 engine: Engine = create_engine(
     DATABASE_URL,
     pool_size=10,          # Số lượng kết nối duy trì tối đa trong pool
