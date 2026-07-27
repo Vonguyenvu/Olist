@@ -16,7 +16,7 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 2. **Silver Layer (Cleansed & Conformed):**
    - Làm sạch dữ liệu: Chuẩn hóa chuỗi (strip/case), ép kiểu dữ liệu (Timestamp, Numeric), xử lý giá trị `NULL`.
-   - Khử trùng lặp (Deduplication) dựa trên mốc thời gian.
+   - Khử trùng lặp dựa trên mốc thời gian.
 
 3. **Gold Layer (Data Warehouse - Star Schema):**
    - Biến đổi dữ liệu sang mô hình hằng số & sự kiện phục vụ phân tích BI.

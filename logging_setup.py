@@ -16,7 +16,7 @@ def setup_logging(log_file: str | None = None) -> logging.Logger:
         "disable_existing_loggers": False,
         "formatters": {
             "standard": {
-                "format": "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+                "format": "%(asctime)s | %(levelname)-8s | %(module)s | %(message)s"
             }
         },
         "handlers": {
