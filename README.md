@@ -1,6 +1,7 @@
 # Olist E-commerce Data Pipeline
 
 Hệ thống Data Pipeline xử lý, làm sạch và mô hình hóa dữ liệu Thương mại điện tử Olist (Brazil) theo chuẩn kiến trúc **Medallion (Bronze ➔ Silver ➔ Gold)**. Dự án sử dụng **PostgreSQL** làm Data Warehouse, **Python CLI** xử lý logic và **Makefile** điều khiển luồng tự động.
+
 ![Mô tả dataset Olist](images/olist.png)
 
 ---
@@ -26,7 +27,7 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 ---
 
-## Công nghệ Sử dụng (Tech Stack)
+## Công nghệ Sử dụng 
 
 - **Ngôn ngữ:** Python 3.10+
 - **Thư viện xử lý:** Pandas, SQLAlchemy, Psycopg2
@@ -36,11 +37,11 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 ---
 
-## Cách vận hành pipeline
+## Vận hành Pipeline 
 
 Thực hiện theo các bước dưới đây để khởi tạo và vận hành toàn bộ Data Pipeline.
 
-### 1) Tải dữ liệu Olist
+### 1. Tải dữ liệu Olist
 
 Tải bộ dữ liệu từ Kaggle tại đường dẫn sau:
 
@@ -50,7 +51,7 @@ Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` r
 
 
 
-### 2) Khởi tạo môi trường ảo và cài đặt thư viện
+### 2. Khởi tạo môi trường ảo và cài đặt thư viện
 
 Tạo môi trường ảo `env` và cài các thư viện cần thiết:
 
@@ -61,7 +62,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3) Cài đặt PostgreSQL và tạo database
+### 3. Cài đặt PostgreSQL và tạo database
 
 Cài đặt PostgreSQL trên máy của bạn, sau đó tạo database tên `olist`.
 
@@ -71,7 +72,7 @@ Ví dụ với `psql`:
 CREATE DATABASE olist;
 ```
 
-### 4) Tạo file cấu hình `.env`
+### 4. Tạo file cấu hình `.env`
 
 Tạo file `.env` ở thư mục gốc của dự án và khai báo các thông tin kết nối cơ sở dữ liệu:
 
@@ -83,7 +84,7 @@ POSTGRES_PORT=5432
 POSTGRES_DB=olist
 ```
 
-### 5) Vận hành Data Pipeline
+### 5. Vận hành Data Pipeline
 
 Sau khi đã có dữ liệu, môi trường ảo và cấu hình database, chạy toàn bộ pipeline bằng lệnh:
 
