@@ -4,7 +4,7 @@ Hệ thống Data Pipeline xử lý, làm sạch và mô hình hóa dữ liệu 
 
 ---
 
-## 🏗️ Kiến trúc Dữ liệu (Medallion Architecture)
+## Kiến trúc Dữ liệu (Medallion Architecture)
 
 Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt trong PostgreSQL:
 
@@ -17,7 +17,7 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
    - Khử trùng lặp (Deduplication) dựa trên mốc thời gian.
 
 3. **Gold Layer (Data Warehouse - Star Schema):**
-   - Biến đổi dữ liệu sang mô hình hằng số & sự kiện (Dimensional Modeling) phục vụ phân tích BI.
+   - Biến đổi dữ liệu sang mô hình hằng số & sự kiện phục vụ phân tích BI.
    - **Fact Tables:** `fact_orders`, `fact_payments`.
    - **Dimension Tables:** `dim_customers`, `dim_products`, `dim_sellers`, `dim_reviews`, `dim_payment_types`, `dim_date`.
 
