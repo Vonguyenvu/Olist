@@ -51,3 +51,71 @@ Olist/
 ├── Makefile                     # Điều khiển và tự động hóa Pipeline
 ├── requirements.txt             # Danh sách các thư viện Python
 └── README.md                    # Tài liệu hướng dẫn dự án
+```
+
+---
+
+## 🚀 Cách chạy dự án
+
+Thực hiện theo các bước dưới đây để khởi tạo và vận hành toàn bộ Data Pipeline.
+
+### 1) Tải dữ liệu Olist
+
+Tải bộ dữ liệu từ Kaggle tại đường dẫn sau:
+
+https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
+
+Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` rồi giải nén tại đó. Thư mục `data/` sẽ chứa các file CSV nguồn dùng cho pipeline.
+
+### 2) Khởi tạo môi trường ảo và cài đặt thư viện
+
+Tạo môi trường ảo `env` và cài các thư viện cần thiết:
+
+```bash
+python3 -m venv env
+source env/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 3) Cài đặt PostgreSQL và tạo database
+
+Cài đặt PostgreSQL trên máy của bạn, sau đó tạo database tên `olist`.
+
+Ví dụ với `psql`:
+
+```sql
+CREATE DATABASE olist;
+```
+
+### 4) Tạo file cấu hình `.env`
+
+Tạo file `.env` ở thư mục gốc của dự án và khai báo các thông tin kết nối cơ sở dữ liệu:
+
+```env
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_password
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=olist
+```
+
+### 5) Vận hành Data Pipeline
+
+Sau khi đã có dữ liệu, môi trường ảo và cấu hình database, chạy toàn bộ pipeline bằng lệnh:
+
+```bash
+make run-all
+```
+
+Lệnh này sẽ lần lượt:
+
+1. Tạo các bảng ở các tầng Bronze, Silver, Gold.
+2. Nạp dữ liệu từ CSV vào Bronze.
+3. Chuyển đổi dữ liệu từ Bronze sang Silver.
+4. Biến đổi dữ liệu từ Silver sang Gold.
+
+### Lưu ý
+
+- Đảm bảo PostgreSQL đang chạy trước khi thực thi `make run-all`.
+- Nếu cần tạo lại schema từ đầu, có thể chạy riêng `make init`.
