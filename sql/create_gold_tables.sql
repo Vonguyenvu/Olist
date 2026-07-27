@@ -1,4 +1,3 @@
--- Tạo schema chứa Data Warehouse
 CREATE SCHEMA IF NOT EXISTS gold;
 
 -- 1. Bảng Dim Customers 
@@ -41,7 +40,7 @@ CREATE TABLE gold.dim_date (
     is_weekend BOOLEAN
 );
 
--- 5. Bảng Dim Reviews (Đã sửa lỗi typo riview -> review)
+-- 5. Bảng Dim Reviews 
 CREATE TABLE gold.dim_reviews (
     review_key VARCHAR(50) PRIMARY KEY,
     review_score INT,

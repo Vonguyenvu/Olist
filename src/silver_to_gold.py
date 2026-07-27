@@ -1,24 +1,18 @@
 import pandas as pd
 import logging
 from sqlalchemy import text
-
 from .db_connection import get_db_engine
 from logging_setup import setup_logging
 
 logger = logging.getLogger(__name__)
 
 def create_gold_schema(engine):
-    """Đảm bảo schema gold đã được khởi tạo trong PostgreSQL"""
     with engine.connect() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS gold;"))
         conn.commit()
     logger.info("Schema gold sẵn sàng")
 
 def clear_existing_gold_tables(engine):
-    """
-    Xóa dữ liệu cũ trong schema gold trước khi nạp mới.
-    LƯU Ý THỨ TỰ: TRUNCATE các bảng Fact trước, bảng Dim sau!
-    """
     logger.info("Đang làm sạch schema gold")
     
     fact_tables = [
@@ -86,7 +80,7 @@ def transform_and_load_dims(silver_data, engine):
     dim_customers.to_sql("dim_customers", engine, schema="gold", if_exists="append", index=False)
     logger.info("Đã nạp %d dòng vào gold.dim_customers", len(dim_customers))
 
-    # 2. dim_products (Kết hợp dịch tên danh mục)
+    # 2. dim_products
     products_merged = silver_data["products"].merge(
         silver_data["translation"], 
         on="product_category_name", 
@@ -183,7 +177,7 @@ def transform_and_load_facts(silver_data, engine):
     orders_df = silver_data["orders"].copy()
     reviews_df = silver_data["reviews"].copy()
 
-    # KHỬ TRÙNG LẶP REVIEWS: Đảm bảo 1 order_id chỉ lấy 1 review_id mới nhất
+    
     reviews_dedup = (
         reviews_df.sort_values("review_answer_timestamp")
         .groupby("order_id")
@@ -191,16 +185,13 @@ def transform_and_load_facts(silver_data, engine):
         .reset_index()[["order_id", "review_id"]]
     )
 
-    # Ghép bảng items với orders và reviews_dedup
     df = items_df.merge(orders_df, on="order_id", how="inner")
     df = df.merge(reviews_dedup, on="order_id", how="left")
 
-    # Chuyển đổi datetime
     df["purchase_dt"] = df["order_purchase_timestamp"]
     df["delivered_dt"] = df["order_delivered_customer_date"]
     df["estimated_dt"] = df["order_estimated_delivery_date"]
 
-    # Tính toán chỉ số delivery
     df["delivery_days_actual"] = (df["delivered_dt"] - df["purchase_dt"]).dt.days
     df["delivery_days_estimated"] = (df["estimated_dt"] - df["purchase_dt"]).dt.days
     df["is_delayed"] = df["delivered_dt"] > df["estimated_dt"]
@@ -237,20 +228,14 @@ def run_silver_to_gold():
     
     try:
         logger.info("Bắt đầu tầng silver -> gold")
-        
-        # 1. Tạo schema gold nếu chưa có
         create_gold_schema(engine)
-        
-        # 2. Truncate các bảng Gold cũ nếu đã tồn tại
         try:
             clear_existing_gold_tables(engine)
         except Exception:
             logger.warning("Không thể làm sạch bảng gold; có thể bảng chưa được tạo", exc_info=True)
 
-        # 3. Đọc dữ liệu từ Schema Silver
         silver_data = load_silver_data(engine)
-        
-        # 4. Transform & Load
+
         transform_and_load_dims(silver_data, engine)
         transform_and_load_facts(silver_data, engine)
         

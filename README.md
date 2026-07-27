@@ -1,22 +1,23 @@
-# Olist E-commerce Data Pipeline (Medallion Architecture)
+# 🛒 Olist E-commerce Data Pipeline (Medallion Architecture)
 
-Hệ thống Data Pipeline xử lý và làm sạch dữ liệu thương mại điện tử Olist (Brazil E-commerce Dataset) được thiết kế và triển khai theo kiến trúc **Medallion (Bronze -> Silver -> Gold)**, tối ưu hóa lưu trữ và truy vấn trên **PostgreSQL**, vận hành đơn giản và hiệu quả qua **Python CLI & Makefile**.
+Hệ thống Data Pipeline xử lý, làm sạch và mô hình hóa dữ liệu Thương mại điện tử Olist (Brazil) theo chuẩn kiến trúc **Medallion (Bronze ➔ Silver ➔ Gold)**. Dự án sử dụng **PostgreSQL** làm Data Warehouse, **Python CLI** xử lý logic và **Makefile** điều khiển luồng tự động.
 
 ---
 
-## 📐 Kiến trúc Hệ thống (Medallion Architecture)
+## 🏗️ Kiến trúc Dữ liệu (Medallion Architecture)
 
-Dữ liệu được xử lý qua 3 tầng lưu trữ trong PostgreSQL (`schema bronze`, `silver`, `gold`):
+Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt trong PostgreSQL:
 
-1. **Bronze Layer (Raw Data):** 
-   - Đổ toàn bộ dữ liệu thô từ các file CSV của Olist vào PostgreSQL bằng câu lệnh `COPY` tối ưu tốc độ cao.
-   - Giữ nguyên cấu trúc nguyên bản của dữ liệu nguồn.
-2. **Silver Layer (Cleansed & Conformed Data):**
-   - Làm sạch khoảng trắng thừa, chuẩn hóa định dạng Text (Upper/Title case).
-   - Ép kiểu dữ liệu (Numeric, Datetime), xử lý các giá trị `NULL`.
-   - Khử trùng lặp dữ liệu (Deduplication) dựa trên mốc thời gian cập nhật.
-3. **Gold Layer (Data Warehouse - Dimensional Modeling):**
-   - Thiết kế mô hình Star Schema (Sơ đồ ngôi sao) phục vụ phân tích BI và Báo cáo.
+1. **Bronze Layer (Raw Data):**
+   - Nạp dữ liệu thô từ các file CSV gốc vào các bảng `bronze.*`.
+   - Giữ nguyên định dạng và cấu trúc dữ liệu ban đầu.
+
+2. **Silver Layer (Cleansed & Conformed):**
+   - Làm sạch dữ liệu: Chuẩn hóa chuỗi (strip/case), ép kiểu dữ liệu (Timestamp, Numeric), xử lý giá trị `NULL`.
+   - Khử trùng lặp (Deduplication) dựa trên mốc thời gian.
+
+3. **Gold Layer (Data Warehouse - Star Schema):**
+   - Biến đổi dữ liệu sang mô hình hằng số & sự kiện (Dimensional Modeling) phục vụ phân tích BI.
    - **Fact Tables:** `fact_orders`, `fact_payments`.
    - **Dimension Tables:** `dim_customers`, `dim_products`, `dim_sellers`, `dim_reviews`, `dim_payment_types`, `dim_date`.
 
@@ -24,31 +25,29 @@ Dữ liệu được xử lý qua 3 tầng lưu trữ trong PostgreSQL (`schema 
 
 ## 🛠️ Công nghệ Sử dụng (Tech Stack)
 
-- **Ngôn ngữ lập trình:** Python 3.10+
-- **Thư viện xử lý & Kết nối DB:** Pandas, SQLAlchemy, Psycopg2
+- **Ngôn ngữ:** Python 3.10+
+- **Thư viện xử lý:** Pandas, SQLAlchemy, Psycopg2
 - **Cơ sở dữ liệu:** PostgreSQL 15+
-- **Điều phối & Tự động hóa:** Makefile
-- **Báo cáo & Trực quan hóa:** Power BI / Metabase
+- **Công cụ điều khiển:** Make (Linux CLI)
+- **Báo cáo & BI:** Power BI
 
 ---
 
-## 📂 Cấu trúc Dự án
+## 📁 Cấu trúc Thư mục Dự án
 
 ```text
-.
-├── data/
-│   └── bronze/                  # Chứa các file CSV nguồn của Olist
+Olist/
 ├── sql/
-│   ├── create_bronze_tables.sql # DDL tạo schema & bảng tầng Bronze
-│   ├── create_silver_tables.sql # DDL tạo schema & bảng tầng Silver
-│   └── create_gold_tables.sql   # DDL tạo schema & bảng tầng Gold
+│   ├── create_bronze_tables.sql # DDL tạo bảng tầng Bronze (IF NOT EXISTS)
+│   ├── create_silver_tables.sql # DDL tạo bảng tầng Silver
+│   └── create_gold_tables.sql   # DDL tạo bảng tầng Gold
 ├── src/
-│   ├── db_connection.py         # Quản lý kết nối PostgreSQL bằng SQLAlchemy
-│   ├── load_to_bronze.py        # Pipeline nạp CSV -> Bronze (COPY expert)
+│   ├── db_connection.py         # Cấu hình kết nối PostgreSQL
+│   ├── load_to_bronze.py        # Pipeline nạp CSV -> Bronze
 │   ├── bronze_to_silver.py      # Pipeline làm sạch Bronze -> Silver
-│   └── silver_to_gold.py        # Pipeline biến đổi Silver -> Gold (Star Schema)
-├── .env                         # Khai báo biến môi trường (Postgres Credentials)
-├── .gitignore                   # Cấu hình bỏ qua các file rác, venv, credentials
-├── Makefile                     # File điều khiển chính để vận hành pipeline
-├── requirements.txt             # Các thư viện Python cần thiết
+│   └── silver_to_gold.py        # Pipeline mô hình hóa Silver -> Gold
+├── .env                         # Khai báo biến môi trường (Credentials)
+├── .gitignore                   # Bỏ qua venv, .env, cache
+├── Makefile                     # Điều khiển và tự động hóa Pipeline
+├── requirements.txt             # Danh sách các thư viện Python
 └── README.md                    # Tài liệu hướng dẫn dự án

@@ -1,5 +1,6 @@
-# Bỏ qua toàn bộ dữ liệu thô và các file nặng trong thư mục data
-data/
+# Bỏ qua toàn bộ file bên trong data, nhưng vẫn giữ thư mục bằng file giữ chỗ
+data/*
+!data/.gitkeep
 
 # Bỏ qua môi trường ảo Python và file cấu hình ẩn
 env/

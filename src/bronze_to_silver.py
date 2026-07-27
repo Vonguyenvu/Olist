@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 def create_silver_schema(engine):
-    """Đảm bảo schema silver đã được khởi tạo trong PostgreSQL"""
     with engine.connect() as conn:
         conn.execute(text("CREATE SCHEMA IF NOT EXISTS silver;"))
         conn.commit()
@@ -18,7 +17,6 @@ def create_silver_schema(engine):
 
 
 def clear_existing_silver_tables(engine):
-    """Xóa dữ liệu cũ trong schema silver trước khi nạp mới."""
     logger.info("Đang làm sạch schema silver")
 
     tables = [
@@ -46,8 +44,7 @@ def clear_existing_silver_tables(engine):
 def clean_customers():
     logger.info("Đang làm sạch bronze.customers")
     df = pd.read_sql('SELECT * FROM bronze.customers', engine)
-    
-    # Làm sạch: loại bỏ khoảng trắng thừa
+
     df['customer_city'] = df['customer_city'].str.strip().str.title()
     df['customer_state'] = df['customer_state'].str.strip().str.upper()
     df["customer_zip_code_prefix"] = pd.to_numeric(df["customer_zip_code_prefix"], errors="coerce").astype("Int64")
@@ -57,8 +54,7 @@ def clean_customers():
 def clean_products():
     logger.info("Đang làm sạch bronze.products")
     df = pd.read_sql(sql='SELECT * FROM bronze.products', con= engine)
-    
-    # Ép kiểu dữ liệu số
+
     numeric_cols = ["product_description_lenght","product_photos_qty","product_weight_g", "product_length_cm", "product_height_cm", "product_width_cm"]
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
@@ -69,8 +65,7 @@ def clean_products():
 def clean_sellers():
     logger.info("Đang làm sạch bronze.sellers")
     df = pd.read_sql("SELECT * FROM bronze.sellers", engine)
-    
-    # Làm sạch: loại bỏ khoảng trắng thừa
+
     df['seller_city'] = df['seller_city'].str.strip().str.title()
     df['seller_state'] = df['seller_state'].str.strip().str.upper()
     df["seller_zip_code_prefix"] = pd.to_numeric(df["seller_zip_code_prefix"], errors="coerce").astype("Int64")
@@ -81,18 +76,14 @@ def clean_sellers():
 def clean_reviews():
     logger.info("Đang làm sạch bronze.order_reviews")
     df = pd.read_sql("SELECT * FROM bronze.order_reviews", engine)
-    
-    # Parse timestamp
+
     df["review_answer_timestamp"] = pd.to_datetime(df["review_answer_timestamp"],errors='coerce')
     df["review_creation_date"] = pd.to_datetime(df["review_creation_date"],errors='coerce')
-    
-    # Khử trùng lặp (giữ lại review mới nhất cho từng review_id)
+
     df = df.sort_values("review_answer_timestamp").groupby("review_id").last().reset_index()
     
-    # Ép kiểu dữ liệu số
     df["review_score"] = pd.to_numeric(df["review_score"],errors='coerce').astype("Int64")
     
-    # Xử lý text NULL
     df["review_comment_title"] = df["review_comment_title"].fillna("No Title").str.strip()
     df["review_comment_message"] = df["review_comment_message"].fillna("No Comment").str.strip()
     
@@ -103,7 +94,6 @@ def clean_orders():
     logger.info("Đang làm sạch bronze.orders")
     df = pd.read_sql("SELECT * FROM bronze.orders", engine)
     
-    # Ép kiểu Datetime cho tất cả các cột thời gian
     date_cols = [
         "order_purchase_timestamp", "order_approved_at", 
         "order_delivered_carrier_date", "order_delivered_customer_date", 
@@ -141,14 +131,12 @@ def clean_geolocation():
     logger.info("Đang làm sạch bronze.geolocation")
     df = pd.read_sql("SELECT * FROM bronze.geolocation", engine)
     
-    # Ép kiểu tọa độ và làm sạch text
     df['geolocation_zip_code_prefix'] = pd.to_numeric(df['geolocation_zip_code_prefix'], errors='coerce').astype('Int64')
     df['geolocation_lat'] = pd.to_numeric(df['geolocation_lat'], errors='coerce')
     df['geolocation_lng'] = pd.to_numeric(df['geolocation_lng'], errors='coerce')
     df['geolocation_city'] = df['geolocation_city'].str.strip().str.title()
     df['geolocation_state'] = df['geolocation_state'].str.strip().str.upper()
-    
-    # Loại bỏ trùng lặp hoàn toàn
+
     df = df.drop_duplicates()
     
     df.to_sql("geolocation", engine, schema="silver", if_exists="append", index=False)
@@ -159,8 +147,7 @@ def clean_translation():
     df = pd.read_sql("SELECT * FROM bronze.product_category_name_translation", engine)
     df['product_category_name'] = df['product_category_name'].str.strip()
     df['product_category_name_english'] = df['product_category_name_english'].str.strip()
-    
-    # Loại bỏ trùng lặp hoàn toàn
+
     df = df.drop_duplicates()
     
     df.to_sql("product_category_name_translation", engine, schema="silver", if_exists="append", index=False)
