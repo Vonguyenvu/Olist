@@ -1,6 +1,7 @@
-# Olist E-commerce Data Pipeline (Medallion Architecture)
+# Olist E-commerce Data Pipeline
 
 Hệ thống Data Pipeline xử lý, làm sạch và mô hình hóa dữ liệu Thương mại điện tử Olist (Brazil) theo chuẩn kiến trúc **Medallion (Bronze ➔ Silver ➔ Gold)**. Dự án sử dụng **PostgreSQL** làm Data Warehouse, **Python CLI** xử lý logic và **Makefile** điều khiển luồng tự động.
+![Mô tả dataset Olist](images/olist.png)
 
 ---
 
@@ -35,29 +36,7 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 ---
 
-## Cấu trúc Thư mục Dự án
-
-```text
-Olist/
-├── sql/
-│   ├── create_bronze_tables.sql # DDL tạo bảng tầng Bronze
-│   ├── create_silver_tables.sql # DDL tạo bảng tầng Silver
-│   └── create_gold_tables.sql   # DDL tạo bảng tầng Gold
-├── src/
-│   ├── db_connection.py         # Cấu hình kết nối PostgreSQL
-│   ├── load_to_bronze.py        # Pipeline nạp CSV -> Bronze
-│   ├── bronze_to_silver.py      # Pipeline làm sạch Bronze -> Silver
-│   └── silver_to_gold.py        # Pipeline mô hình hóa Silver -> Gold
-├── .env                         # Khai báo biến môi trường 
-├── .gitignore                   # Bỏ qua venv, .env, cache
-├── Makefile                     # Điều khiển và tự động hóa Pipeline
-├── requirements.txt             # Danh sách các thư viện Python
-└── README.md                    # Tài liệu hướng dẫn dự án
-```
-
----
-
-## Cách vận hành dự án
+## Cách vận hành pipeline
 
 Thực hiện theo các bước dưới đây để khởi tạo và vận hành toàn bộ Data Pipeline.
 
@@ -69,7 +48,7 @@ https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
 
 Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` rồi giải nén tại đó. Thư mục `data/` sẽ chứa các file CSV nguồn dùng cho pipeline.
 
-![Mô tả dataset Olist](images/olist.png)
+
 
 ### 2) Khởi tạo môi trường ảo và cài đặt thư viện
 
@@ -120,6 +99,5 @@ Lệnh này sẽ lần lượt:
 4. Biến đổi dữ liệu từ Silver sang Gold.
 
 ### Lưu ý
-
 - Đảm bảo PostgreSQL đang chạy trước khi thực thi `make run-all`.
 - Nếu cần tạo lại schema từ đầu, có thể chạy riêng `make init`.
