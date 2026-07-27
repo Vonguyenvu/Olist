@@ -29,9 +29,9 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 ## Công nghệ Sử dụng 
 
-- **Ngôn ngữ:** Python 3.10+
+- **Ngôn ngữ:** Python 
 - **Thư viện xử lý:** Pandas, SQLAlchemy, Psycopg2
-- **Cơ sở dữ liệu:** PostgreSQL 15+
+- **Cơ sở dữ liệu:** PostgreSQL 
 - **Công cụ điều khiển:** Make (Linux CLI)
 - **Báo cáo & BI:** Power BI
 
