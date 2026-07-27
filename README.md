@@ -1,4 +1,4 @@
-# 🛒 Olist E-commerce Data Pipeline (Medallion Architecture)
+# Olist E-commerce Data Pipeline (Medallion Architecture)
 
 Hệ thống Data Pipeline xử lý, làm sạch và mô hình hóa dữ liệu Thương mại điện tử Olist (Brazil) theo chuẩn kiến trúc **Medallion (Bronze ➔ Silver ➔ Gold)**. Dự án sử dụng **PostgreSQL** làm Data Warehouse, **Python CLI** xử lý logic và **Makefile** điều khiển luồng tự động.
 
@@ -23,7 +23,7 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 ---
 
-## 🛠️ Công nghệ Sử dụng (Tech Stack)
+## Công nghệ Sử dụng (Tech Stack)
 
 - **Ngôn ngữ:** Python 3.10+
 - **Thư viện xử lý:** Pandas, SQLAlchemy, Psycopg2
@@ -33,12 +33,12 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 ---
 
-## 📁 Cấu trúc Thư mục Dự án
+## Cấu trúc Thư mục Dự án
 
 ```text
 Olist/
 ├── sql/
-│   ├── create_bronze_tables.sql # DDL tạo bảng tầng Bronze (IF NOT EXISTS)
+│   ├── create_bronze_tables.sql # DDL tạo bảng tầng Bronze
 │   ├── create_silver_tables.sql # DDL tạo bảng tầng Silver
 │   └── create_gold_tables.sql   # DDL tạo bảng tầng Gold
 ├── src/
@@ -46,7 +46,7 @@ Olist/
 │   ├── load_to_bronze.py        # Pipeline nạp CSV -> Bronze
 │   ├── bronze_to_silver.py      # Pipeline làm sạch Bronze -> Silver
 │   └── silver_to_gold.py        # Pipeline mô hình hóa Silver -> Gold
-├── .env                         # Khai báo biến môi trường (Credentials)
+├── .env                         # Khai báo biến môi trường 
 ├── .gitignore                   # Bỏ qua venv, .env, cache
 ├── Makefile                     # Điều khiển và tự động hóa Pipeline
 ├── requirements.txt             # Danh sách các thư viện Python
