@@ -21,6 +21,8 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
    - **Fact Tables:** `fact_orders`, `fact_payments`.
    - **Dimension Tables:** `dim_customers`, `dim_products`, `dim_sellers`, `dim_reviews`, `dim_payment_types`, `dim_date`.
 
+![Mô tả mô hình star schema với các bảng dimension và fact](images/schema.png)
+
 ---
 
 ## Công nghệ Sử dụng (Tech Stack)
@@ -55,7 +57,7 @@ Olist/
 
 ---
 
-## 🚀 Cách chạy dự án
+## Cách vận hành dự án
 
 Thực hiện theo các bước dưới đây để khởi tạo và vận hành toàn bộ Data Pipeline.
 
@@ -66,6 +68,8 @@ Tải bộ dữ liệu từ Kaggle tại đường dẫn sau:
 https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
 
 Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` rồi giải nén tại đó. Thư mục `data/` sẽ chứa các file CSV nguồn dùng cho pipeline.
+
+![Mô tả dataset Olist](images/olist.png)
 
 ### 2) Khởi tạo môi trường ảo và cài đặt thư viện
 
