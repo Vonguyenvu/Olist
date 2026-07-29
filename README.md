@@ -110,17 +110,37 @@ pip install -r requirements.txt
 ```
  
  
-**2. Chạy từng bước pipeline thủ công**
+**2. Vận hành Data Pipeline bằng Makefile**
+ 
+Sau khi đã có dữ liệu (đặt trong `data/`), môi trường ảo, và cấu hình database, chạy toàn bộ pipeline:
  
 ```bash
-# Khởi tạo DDL (Bronze, Silver, Gold)
-PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d olist -f sql/create_bronze_tables.sql
-PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d olist -f sql/create_silver_tables.sql
-PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d olist -f sql/create_gold_tables.sql
- 
-# Chạy ETL 
-python3 -m src.pipeline
+make run-all
 ```
-
-> Đảm bảo PostgreSQL đang chạy trước khi thực thi các lệnh trên.
+ 
+Lệnh này lần lượt chạy:
+1. `make init` — Tạo các bảng ở tầng Bronze, Silver, Gold.
+2. `make bronze` — Nạp dữ liệu CSV vào Bronze.
+3. `make silver` — Chuyển đổi dữ liệu Bronze sang Silver.
+4. `make gold` — Biến đổi dữ liệu Silver sang Gold.
+Cũng có thể chạy riêng từng bước nếu cần debug:
+ 
+```bash
+make init      # chỉ tạo DDL
+make bronze    # chỉ nạp Bronze
+make silver    # chỉ chuyển Bronze -> Silver
+make gold      # chỉ biến đổi Silver -> Gold
+```
+ 
+Xem toàn bộ lệnh có sẵn:
+ 
+```bash
+make help
+```
+ 
+### Lưu ý
+ 
+- Đảm bảo PostgreSQL đang chạy trước khi thực thi `make run-all`.
+- Nếu cần tạo lại schema từ đầu, chạy riêng `make init` — DDL đã tự `DROP TABLE IF EXISTS` trước khi tạo, nên chạy lại bao nhiêu lần cũng an toàn.
+ 
 

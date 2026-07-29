@@ -28,6 +28,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-
+  metabase:
+    image: metabase/metabase:latest
+    container_name: olist_metabase
+    profiles:
+      - metabase
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        
 volumes:
   pgdata:
