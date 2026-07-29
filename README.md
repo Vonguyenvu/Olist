@@ -41,6 +41,41 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 Thực hiện theo các bước dưới đây để khởi tạo và vận hành toàn bộ Data Pipeline.
 
+### Chạy bằng Docker
+
+Cách nhanh nhất để chạy toàn bộ dự án là dùng Docker Compose. Bản compose mặc định sẽ khởi động PostgreSQL và pipeline; Metabase là tùy chọn.
+
+1. Tạo file `.env` ở thư mục gốc của dự án:
+
+```env
+POSTGRES_USER=olist_user
+POSTGRES_PASSWORD=olist_password
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_HOST_PORT=5433
+POSTGRES_DB=olist
+```
+
+2. Build và chạy pipeline:
+
+```bash
+docker compose up --build
+```
+
+3. Nếu muốn mở Metabase, chạy thêm profile tùy chọn:
+
+```bash
+docker compose --profile metabase up --build
+```
+
+4. Dừng toàn bộ dịch vụ:
+
+```bash
+docker compose down -v
+```
+
+Nếu máy bạn đã có PostgreSQL chạy sẵn trên cổng `5432`, giữ nguyên cấu hình trên hoặc đổi `POSTGRES_HOST_PORT` sang một cổng khác đang trống.
+
 ### 1. Tải dữ liệu Olist
 
 Tải bộ dữ liệu từ Kaggle tại đường dẫn sau:

@@ -1,5 +1,6 @@
 CREATE SCHEMA IF NOT EXISTS silver;
 
+DROP TABLE IF EXISTS silver.customers CASCADE;
 CREATE TABLE silver.customers (
     customer_id VARCHAR(50) PRIMARY KEY,
     customer_unique_id VARCHAR(50),
@@ -8,6 +9,7 @@ CREATE TABLE silver.customers (
     customer_state VARCHAR(10)
 );
 
+DROP TABLE IF EXISTS silver.orders CASCADE;
 CREATE TABLE silver.orders (
     order_id VARCHAR(50) PRIMARY KEY,
     customer_id VARCHAR(50),
@@ -19,6 +21,7 @@ CREATE TABLE silver.orders (
     order_estimated_delivery_date TIMESTAMP
 );
 
+DROP TABLE IF EXISTS silver.order_items CASCADE;
 CREATE TABLE silver.order_items (
     order_id VARCHAR(50),
     order_item_id INT,
@@ -30,6 +33,7 @@ CREATE TABLE silver.order_items (
     PRIMARY KEY (order_id, order_item_id)
 );
 
+DROP TABLE IF EXISTS silver.order_payments CASCADE;
 CREATE TABLE silver.order_payments (
     order_id VARCHAR(50),
     payment_sequential INT,
@@ -39,6 +43,7 @@ CREATE TABLE silver.order_payments (
     PRIMARY KEY (order_id, payment_sequential)
 );
 
+DROP TABLE IF EXISTS silver.order_reviews CASCADE;
 CREATE TABLE silver.order_reviews (
     review_id VARCHAR(50),
     order_id VARCHAR(50),
@@ -50,6 +55,7 @@ CREATE TABLE silver.order_reviews (
     PRIMARY KEY (review_id, order_id)
 );
 
+DROP TABLE IF EXISTS silver.products CASCADE;
 CREATE TABLE silver.products (
     product_id VARCHAR(50) PRIMARY KEY,
     product_category_name VARCHAR(100),
@@ -62,6 +68,7 @@ CREATE TABLE silver.products (
     product_width_cm INT
 );
 
+DROP TABLE IF EXISTS silver.sellers CASCADE;
 CREATE TABLE silver.sellers (
     seller_id VARCHAR(50) PRIMARY KEY,
     seller_zip_code_prefix INT,
@@ -69,11 +76,13 @@ CREATE TABLE silver.sellers (
     seller_state VARCHAR(10)
 );
 
+DROP TABLE IF EXISTS silver.product_category_name_translation CASCADE;
 CREATE TABLE silver.product_category_name_translation (
     product_category_name VARCHAR(100) PRIMARY KEY,
     product_category_name_english VARCHAR(100)
 );
 
+DROP TABLE IF EXISTS silver.geolocation CASCADE;
 CREATE TABLE silver.geolocation (
     geolocation_zip_code_prefix INT,
     geolocation_lat DOUBLE PRECISION,

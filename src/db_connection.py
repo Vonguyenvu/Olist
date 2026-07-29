@@ -1,24 +1,47 @@
 import os
 import logging
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.engine import URL
 from dotenv import load_dotenv
 
 from logging_setup import setup_logging
 
-# Đọc các biến môi trường từ file .env (nếu có)
-load_dotenv()
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Đọc các biến môi trường từ file .env ở thư mục gốc dự án
+load_dotenv(PROJECT_ROOT / ".env")
 logger = logging.getLogger(__name__)
 
 # Cấu hình thông số kết nối PostgreSQL
 DB_USER = os.getenv("POSTGRES_USER")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-DB_HOST = os.getenv("POSTGRES_HOST")
-DB_PORT = os.getenv("POSTGRES_PORT")
+DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
+DB_PORT_RAW = os.getenv("POSTGRES_PORT", "5432")
 DB_NAME = os.getenv("POSTGRES_DB")
 
-# Tạo chuỗi kết nối với database 
-DATABASE_URL = F"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}" 
+if not DB_USER or not DB_PASSWORD or not DB_NAME:
+    raise ValueError(
+        "Thiếu biến môi trường PostgreSQL. Cần có POSTGRES_USER, POSTGRES_PASSWORD và POSTGRES_DB."
+    )
+
+try:
+    DB_PORT = int(DB_PORT_RAW)
+except (TypeError, ValueError):
+    raise ValueError(
+        f"POSTGRES_PORT không hợp lệ: {DB_PORT_RAW!r}. Hãy đặt một số nguyên, ví dụ 5432."
+    ) from None
+
+# Tạo URL kết nối với database
+DATABASE_URL = URL.create(
+    "postgresql+psycopg2",
+    username=DB_USER,
+    password=DB_PASSWORD,
+    host=DB_HOST,
+    port=DB_PORT,
+    database=DB_NAME,
+)
 
 # Khởi tạo Engine kết nối
 engine: Engine = create_engine(

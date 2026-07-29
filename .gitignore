@@ -4,7 +4,6 @@ data/*
 
 # Bỏ qua môi trường ảo Python và file cấu hình ẩn
 env/
-.env
 .history/
 __pycache__/
 .DS_Store

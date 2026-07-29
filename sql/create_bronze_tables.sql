@@ -1,5 +1,6 @@
-CREATE SCHEMA if not exists bronze;
+CREATE SCHEMA IF NOT EXISTS bronze;
 
+DROP TABLE IF EXISTS bronze.customers CASCADE;
 CREATE TABLE bronze.customers(
     customer_id TEXT,
     customer_unique_id TEXT,
@@ -8,6 +9,7 @@ CREATE TABLE bronze.customers(
     customer_state TEXT
 );
 
+DROP TABLE IF EXISTS bronze.orders CASCADE;
 CREATE TABLE bronze.orders(
     order_id TEXT,
     customer_id TEXT,
@@ -19,6 +21,7 @@ CREATE TABLE bronze.orders(
     order_estimated_delivery_date TEXT
 );
 
+DROP TABLE IF EXISTS bronze.order_items CASCADE;
 CREATE TABLE bronze.order_items (
     order_id TEXT,
     order_item_id TEXT,
@@ -29,6 +32,7 @@ CREATE TABLE bronze.order_items (
     freight_value TEXT
 );
 
+DROP TABLE IF EXISTS bronze.order_payments CASCADE;
 CREATE TABLE bronze.order_payments (
     order_id TEXT,
     payment_sequential TEXT,
@@ -37,6 +41,7 @@ CREATE TABLE bronze.order_payments (
     payment_value TEXT
 );
 
+DROP TABLE IF EXISTS bronze.order_reviews CASCADE;
 CREATE TABLE bronze.order_reviews (
     review_id TEXT,
     order_id TEXT,
@@ -47,6 +52,7 @@ CREATE TABLE bronze.order_reviews (
     review_answer_timestamp TEXT
 );
 
+DROP TABLE IF EXISTS bronze.products CASCADE;
 CREATE TABLE bronze.products (
     product_id TEXT,
     product_category_name TEXT,
@@ -59,6 +65,7 @@ CREATE TABLE bronze.products (
     product_width_cm TEXT
 );
 
+DROP TABLE IF EXISTS bronze.sellers CASCADE;
 CREATE TABLE bronze.sellers (
     seller_id TEXT,
     seller_zip_code_prefix TEXT,
@@ -66,11 +73,13 @@ CREATE TABLE bronze.sellers (
     seller_state TEXT
 );
 
+DROP TABLE IF EXISTS bronze.product_category_name_translation CASCADE;
 CREATE TABLE bronze.product_category_name_translation (
     product_category_name TEXT,
     product_category_name_english TEXT
 );
 
+DROP TABLE IF EXISTS bronze.geolocation CASCADE;
 CREATE TABLE bronze.geolocation (
     geolocation_zip_code_prefix TEXT,
     geolocation_lat TEXT,
@@ -78,4 +87,3 @@ CREATE TABLE bronze.geolocation (
     geolocation_city TEXT,
     geolocation_state TEXT
 );
-
