@@ -53,7 +53,7 @@ Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` r
 CREATE DATABASE olist;
 ```
  
-### 2. Chỉnh sửa file cấu hình `.env`
+### 3. Chỉnh sửa file cấu hình `.env`
  
 Chỉnh sửa thông tin kết nối với database ở file `.env`:
  
@@ -66,7 +66,7 @@ POSTGRES_HOST_PORT=5433
 POSTGRES_DB=olist
 ```
 
-> `POSTGRES_HOST_PORT` chỉ dùng khi chạy Docker — là cổng map ra máy host (dùng để tránh xung đột nếu máy bạn đã có PostgreSQL chạy sẵn trên `5432`). Khi chạy trong container, biến `POSTGRES_HOST` sẽ tự động được `docker-compose.yml` override thành `postgres` (tên service), giá trị `localhost` ở đây chỉ áp dụng khi bạn chạy pipeline trực tiếp trên máy (mục "Chạy không dùng Docker" bên dưới).
+> `POSTGRES_HOST_PORT` chỉ dùng khi chạy Docker — là cổng map ra máy host (dùng để tránh xung đột nếu máy bạn đã có PostgreSQL chạy sẵn trên `5432`). Khi chạy trong container, biến `POSTGRES_HOST` sẽ tự động được `docker-compose.yml` override thành `postgres` (tên service), giá trị `localhost` ở đây chỉ áp dụng khi bạn chạy pipeline trực tiếp trên máy.
  
 ---
  
@@ -118,11 +118,9 @@ PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d oli
 PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d olist -f sql/create_silver_tables.sql
 PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d olist -f sql/create_gold_tables.sql
  
-# Chạy ETL từng tầng
-python3 -m src.load_to_bronze
-python3 -m src.bronze_to_silver
-python3 -m src.silver_to_gold
+# Chạy ETL 
+python3 -m src.pipeline
 ```
- 
+
 > Đảm bảo PostgreSQL đang chạy trước khi thực thi các lệnh trên.
 
