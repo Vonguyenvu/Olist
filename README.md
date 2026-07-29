@@ -109,7 +109,7 @@ pip install -r requirements.txt
 CREATE DATABASE olist;
 ```
  
-**3. Chạy từng bước pipeline thủ công** (không còn `make run-all` vì Makefile đã được thay bằng Docker entrypoint):
+**3. Chạy từng bước pipeline thủ công**
  
 ```bash
 # Khởi tạo DDL (Bronze, Silver, Gold)
