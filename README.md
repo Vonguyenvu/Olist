@@ -37,103 +37,99 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 ---
 
-## Vận hành Pipeline 
-
-Thực hiện theo các bước dưới đây để khởi tạo và vận hành toàn bộ Data Pipeline.
-
-### Chạy bằng Docker
-
-Cách nhanh nhất để chạy toàn bộ dự án là dùng Docker Compose. Bản compose mặc định sẽ khởi động PostgreSQL và pipeline; Metabase là tùy chọn.
-
-1. Tạo file `.env` ở thư mục gốc của dự án:
-
+## Vận hành
+ 
+### 1. Tải dữ liệu Olist
+ 
+Tải bộ dữ liệu từ Kaggle tại đường dẫn sau:
+ 
+https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
+ 
+Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` rồi giải nén tại đó. Thư mục `data/` sẽ chứa các file CSV nguồn dùng cho pipeline.
+ 
+### 2. Tạo file cấu hình `.env`
+ 
+Tạo file `.env` ở thư mục gốc của dự án:
+ 
 ```env
-POSTGRES_USER=olist_user
-POSTGRES_PASSWORD=olist_password
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_HOST_PORT=5433
+POSTGRES_HOST_PORT=5434
 POSTGRES_DB=olist
 ```
-
-2. Build và chạy pipeline:
-
+ 
+> `POSTGRES_HOST_PORT` chỉ dùng khi chạy Docker — là cổng map ra máy host (dùng để tránh xung đột nếu máy bạn đã có PostgreSQL chạy sẵn trên `5432`). Khi chạy trong container, biến `POSTGRES_HOST` sẽ tự động được `docker-compose.yml` override thành `postgres` (tên service), giá trị `localhost` ở đây chỉ áp dụng khi bạn chạy pipeline trực tiếp trên máy (mục "Chạy không dùng Docker" bên dưới).
+ 
+---
+ 
+## Cách A — Chạy bằng Docker (khuyến nghị)
+ 
+Cách nhanh nhất, không cần cài PostgreSQL hay Python venv thủ công.
+ 
+**Build và chạy pipeline (Postgres + pipeline):**
+ 
 ```bash
 docker compose up --build
 ```
-
-3. Nếu muốn mở Metabase, chạy thêm profile tùy chọn:
-
+ 
+**Muốn mở thêm Metabase để làm BI dashboard:**
+ 
 ```bash
 docker compose --profile metabase up --build
 ```
-
-4. Dừng toàn bộ dịch vụ:
-
+ 
+Sau khi lên, truy cập `http://localhost:3000` để setup Metabase, kết nối vào DB `olist`.
+ 
+**Dừng toàn bộ và xóa data (chạy lại từ đầu, sạch):**
+ 
 ```bash
 docker compose down -v
 ```
-
-Nếu máy bạn đã có PostgreSQL chạy sẵn trên cổng `5432`, giữ nguyên cấu hình trên hoặc đổi `POSTGRES_HOST_PORT` sang một cổng khác đang trống.
-
-### 1. Tải dữ liệu Olist
-
-Tải bộ dữ liệu từ Kaggle tại đường dẫn sau:
-
-https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
-
-Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` rồi giải nén tại đó. Thư mục `data/` sẽ chứa các file CSV nguồn dùng cho pipeline.
-
-
-
-### 2. Khởi tạo môi trường ảo và cài đặt thư viện
-
-Tạo môi trường ảo `env` và cài các thư viện cần thiết:
-
+ 
+**Chỉ dừng, giữ lại data:**
+ 
+```bash
+docker compose down
+```
+ 
+Pipeline tự động chạy tuần tự init (DDL) → bronze → silver → gold khi container `pipeline` khởi động (qua `entrypoint.sh`), không cần gõ thêm lệnh nào khác.
+ 
+---
+ 
+## Cách B — Chạy không dùng Docker
+ 
+Dùng khi bạn muốn debug nhanh từng bước hoặc không có Docker trên máy.
+ 
+**1. Khởi tạo môi trường ảo và cài thư viện:**
+ 
 ```bash
 python3 -m venv env
 source env/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-
-### 3. Cài đặt PostgreSQL và tạo database
-
-Cài đặt PostgreSQL trên máy của bạn, sau đó tạo database tên `olist`.
-
-Ví dụ với `psql`:
-
+ 
+**2. Cài đặt PostgreSQL và tạo database:**
+ 
 ```sql
 CREATE DATABASE olist;
 ```
-
-### 4. Tạo file cấu hình `.env`
-
-Tạo file `.env` ở thư mục gốc của dự án và khai báo các thông tin kết nối cơ sở dữ liệu:
-
-```env
-POSTGRES_USER=your_user
-POSTGRES_PASSWORD=your_password
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=olist
-```
-
-### 5. Vận hành Data Pipeline
-
-Sau khi đã có dữ liệu, môi trường ảo và cấu hình database, chạy toàn bộ pipeline bằng lệnh:
-
+ 
+**3. Chạy từng bước pipeline thủ công** (không còn `make run-all` vì Makefile đã được thay bằng Docker entrypoint):
+ 
 ```bash
-make run-all
+# Khởi tạo DDL (Bronze, Silver, Gold)
+PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d olist -f sql/create_bronze_tables.sql
+PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d olist -f sql/create_silver_tables.sql
+PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d olist -f sql/create_gold_tables.sql
+ 
+# Chạy ETL từng tầng
+python3 -m src.load_to_bronze
+python3 -m src.bronze_to_silver
+python3 -m src.silver_to_gold
 ```
+ 
+> Đảm bảo PostgreSQL đang chạy trước khi thực thi các lệnh trên. DDL đã idempotent (tự `DROP TABLE IF EXISTS` trước khi tạo), nên chạy lại nhiều lần không lỗi "already exists".
 
-Lệnh này sẽ lần lượt:
-
-1. Tạo các bảng ở các tầng Bronze, Silver, Gold.
-2. Nạp dữ liệu từ CSV vào Bronze.
-3. Chuyển đổi dữ liệu từ Bronze sang Silver.
-4. Biến đổi dữ liệu từ Silver sang Gold.
-
-### Lưu ý
-- Đảm bảo PostgreSQL đang chạy trước khi thực thi `make run-all`.
-- Nếu cần tạo lại schema từ đầu, có thể chạy riêng `make init`.

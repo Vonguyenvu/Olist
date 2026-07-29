@@ -33,7 +33,7 @@ except (TypeError, ValueError):
         f"POSTGRES_PORT không hợp lệ: {DB_PORT_RAW!r}. Hãy đặt một số nguyên, ví dụ 5432."
     ) from None
 
-# Tạo URL kết nối với database
+# URL kết nối với database
 DATABASE_URL = URL.create(
     "postgresql+psycopg2",
     username=DB_USER,
