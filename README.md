@@ -46,8 +46,14 @@ Tải bộ dữ liệu từ Kaggle tại đường dẫn sau:
 https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
  
 Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` rồi giải nén tại đó. Thư mục `data/` sẽ chứa các file CSV nguồn dùng cho pipeline.
+
+### 2. Cài đặt PostgreSQL và tạo database olist 
  
-### 2. Tạo file cấu hình `.env`
+```sql
+CREATE DATABASE olist;
+```
+ 
+### 2. Chỉnh sửa file cấu hình `.env`
  
 Chỉnh sửa thông tin kết nối với database ở file `.env`:
  
@@ -59,7 +65,7 @@ POSTGRES_PORT=5432
 POSTGRES_HOST_PORT=5433
 POSTGRES_DB=olist
 ```
- 
+
 > `POSTGRES_HOST_PORT` chỉ dùng khi chạy Docker — là cổng map ra máy host (dùng để tránh xung đột nếu máy bạn đã có PostgreSQL chạy sẵn trên `5432`). Khi chạy trong container, biến `POSTGRES_HOST` sẽ tự động được `docker-compose.yml` override thành `postgres` (tên service), giá trị `localhost` ở đây chỉ áp dụng khi bạn chạy pipeline trực tiếp trên máy (mục "Chạy không dùng Docker" bên dưới).
  
 ---
@@ -103,13 +109,8 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
  
-**2. Cài đặt PostgreSQL và tạo database:**
  
-```sql
-CREATE DATABASE olist;
-```
- 
-**3. Chạy từng bước pipeline thủ công**
+**2. Chạy từng bước pipeline thủ công**
  
 ```bash
 # Khởi tạo DDL (Bronze, Silver, Gold)
