@@ -49,14 +49,14 @@ Sau khi tải về, đặt toàn bộ file dữ liệu vào thư mục `data/` r
  
 ### 2. Tạo file cấu hình `.env`
  
-Tạo file `.env` ở thư mục gốc của dự án:
+Chỉnh sửa thông tin kết nối với database ở file `.env`:
  
 ```env
 POSTGRES_USER=your_username
 POSTGRES_PASSWORD=your_password
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_HOST_PORT=5434
+POSTGRES_HOST_PORT=5433
 POSTGRES_DB=olist
 ```
  
@@ -74,15 +74,7 @@ Cách nhanh nhất, không cần cài PostgreSQL hay Python venv thủ công.
 docker compose up --build
 ```
  
-**Muốn mở thêm Metabase để làm BI dashboard:**
- 
-```bash
-docker compose --profile metabase up --build
-```
- 
-Sau khi lên, truy cập `http://localhost:3000` để setup Metabase, kết nối vào DB `olist`.
- 
-**Dừng toàn bộ và xóa data (chạy lại từ đầu, sạch):**
+**Dừng toàn bộ và xóa data:**
  
 ```bash
 docker compose down -v
@@ -94,7 +86,7 @@ docker compose down -v
 docker compose down
 ```
  
-Pipeline tự động chạy tuần tự init (DDL) → bronze → silver → gold khi container `pipeline` khởi động (qua `entrypoint.sh`), không cần gõ thêm lệnh nào khác.
+Pipeline tự động chạy tuần tự init (DDL) → bronze → silver → gold khi container `pipeline` khởi động, không cần gõ thêm lệnh nào khác.
  
 ---
  
@@ -131,5 +123,5 @@ python3 -m src.bronze_to_silver
 python3 -m src.silver_to_gold
 ```
  
-> Đảm bảo PostgreSQL đang chạy trước khi thực thi các lệnh trên. DDL đã idempotent (tự `DROP TABLE IF EXISTS` trước khi tạo), nên chạy lại nhiều lần không lỗi "already exists".
+> Đảm bảo PostgreSQL đang chạy trước khi thực thi các lệnh trên.
 
