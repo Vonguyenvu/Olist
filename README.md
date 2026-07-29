@@ -1,6 +1,6 @@
 # Olist E-commerce Data Pipeline
 
-Hệ thống Data Pipeline xử lý, làm sạch và mô hình hóa dữ liệu Thương mại điện tử Olist (Brazil) theo chuẩn kiến trúc **Medallion (Bronze ➔ Silver ➔ Gold)**. Dự án sử dụng **PostgreSQL** làm Data Warehouse, **Python CLI** xử lý logic và **Makefile** điều khiển luồng tự động.
+Hệ thống Data Pipeline xử lý, làm sạch và mô hình hóa dữ liệu Thương mại điện tử Olist (Brazil) theo chuẩn kiến trúc **Medallion (Bronze ➔ Silver ➔ Gold)**. Dự án sử dụng **PostgreSQL** làm Data Warehouse, **Python** xử lý logic ETL, và **Docker Compose** điều phối toàn bộ pipeline chạy tự động.
 
 ![Mô tả dataset Olist](images/olist.png)
 
@@ -32,7 +32,7 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 - **Ngôn ngữ:** Python 
 - **Thư viện xử lý:** Pandas, SQLAlchemy, Psycopg2
 - **Cơ sở dữ liệu:** PostgreSQL 
-- **Công cụ điều khiển:** Make (Linux CLI)
+- **Containerization & điều phối:** Docker, Docker Compose
 - **Báo cáo & BI:** Power BI
 
 ---
