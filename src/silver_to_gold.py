@@ -223,19 +223,15 @@ def transform_and_load_facts(silver_data, engine):
     logger.info("Đã nạp %d dòng vào gold.fact_orders", len(fact_orders))
 
 def run_silver_to_gold():
-    """Hàm điều phối toàn bộ quá trình Silver -> Gold"""
     engine = get_db_engine()
     
     try:
         logger.info("Bắt đầu tầng silver -> gold")
         create_gold_schema(engine)
-        try:
-            clear_existing_gold_tables(engine)
-        except Exception:
-            logger.warning("Không thể làm sạch bảng gold; có thể bảng chưa được tạo", exc_info=True)
-
+        clear_existing_gold_tables(engine)
+ 
         silver_data = load_silver_data(engine)
-
+ 
         transform_and_load_dims(silver_data, engine)
         transform_and_load_facts(silver_data, engine)
         

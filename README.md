@@ -123,8 +123,9 @@ Lệnh này lần lượt chạy:
 2. `make bronze` — Nạp dữ liệu CSV vào Bronze.
 3. `make silver` — Chuyển đổi dữ liệu Bronze sang Silver.
 4. `make gold` — Biến đổi dữ liệu Silver sang Gold.
+
 Cũng có thể chạy riêng từng bước nếu cần debug:
- 
+
 ```bash
 make init      # chỉ tạo DDL
 make bronze    # chỉ nạp Bronze
