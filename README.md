@@ -31,9 +31,7 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
  
 DAG `olist_medallion_pipeline` điều phối toàn bộ pipeline theo đúng kiến trúc Medallion, chạy tuần tự 4 bước:
  
-```
-init_ddl → load_bronze → transform_silver → transform_gold
-```
+![Mô tả DAG Olist pipeline](images/olist.png)
  
 | Task | Nội dung |
 |---|---|
