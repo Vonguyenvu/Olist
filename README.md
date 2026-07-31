@@ -27,6 +27,25 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 
 ---
 
+## Orchestration bằng Airflow
+ 
+DAG `olist_medallion_pipeline` điều phối toàn bộ pipeline theo đúng kiến trúc Medallion, chạy tuần tự 4 bước:
+ 
+```
+init_ddl → load_bronze → transform_silver → transform_gold
+```
+ 
+| Task | Nội dung |
+|---|---|
+| `init_ddl` | Khởi tạo DDL cho 3 schema Bronze, Silver, Gold |
+| `load_bronze` | Nạp CSV nguồn vào tầng Bronze |
+| `transform_silver` | Làm sạch, chuẩn hóa dữ liệu Bronze → Silver |
+| `transform_gold` | Biến đổi Silver → mô hình Star Schema ở tầng Gold |
+ 
+Mỗi task chạy tuần tự, task sau chỉ chạy khi task trước hoàn thành thành công — đảm bảo tính toàn vẹn dữ liệu qua từng tầng. Airflow cho phép theo dõi trạng thái, xem log riêng từng bước, và retry tự động khi có lỗi.
+
+---
+
 ## Công nghệ Sử dụng 
 
 - **Ngôn ngữ:** Python 
@@ -34,6 +53,7 @@ Dữ liệu được tổ chức và biến đổi qua 3 Schemas riêng biệt t
 - **Cơ sở dữ liệu:** PostgreSQL 
 - **Containerization & điều phối:** Docker, Docker Compose
 - **Báo cáo & BI:** Power BI
+- **Workflow Orchestration:** Apache Airflow
 
 ---
 
